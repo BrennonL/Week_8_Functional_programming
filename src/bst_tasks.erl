@@ -14,7 +14,7 @@
 %%%===================================================================
 %%% Public API functions
 %%%===================================================================
--export([add/3,contains/3]).
+-export([add/3,contains/3, default_compare/2]).
 
 
 %%%-------------------------------------------------------------------
@@ -38,9 +38,28 @@
 -type bst_node() :: {term(),bst_node(),bst_node()}.
 -type bst() :: bst_node().
 -spec add(bst(),term(),fun((term(),term()) -> 1|0|-1) | nil()) -> bst().
+add(nil,Val,_) ->
+	{Val, nil, nil};
 add(BST,nil,_)->
-	to_do.
-
+	BST;
+add(BST,Val,nil) ->
+	{Focus_num, Left_child, Right_child} = BST,
+	Direction = default_compare(Focus_num, Val),
+	if 
+		Direction =:= -1 ->
+			add(Left_child, Val, Function);
+		true ->
+			add(Right_child, Val, Function)
+	end;
+add(BST,Val,Function) ->
+	{Focus_num, Left_child, Right_child} = BST,
+	Direction = Function(Focus_num, Val),
+	if 
+		Direction =:= -1 ->
+			add(Left_child, Val, Function);
+		true ->
+			add(Right_child, Val, Function)
+	end.
 %%%-------------------------------------------------------------------
 %%% @doc
 %%% Determine if a Binary Search Tree contains a specified value. 
@@ -65,8 +84,12 @@ contains({Value,Next_l,Next_r},Search_value,Comparitor)->
 	to_do.
 
 -spec default_compare(term(),term())->1|0|-1.
-default_compare(X,Y) when X < Y-> 
-	to_do.
+default_compare(X,Y) when X < Y -> 
+	-1;
+default_compare(X,Y) when X > Y -> 
+	1;
+default_compare(X,Y) -> 
+	0.
 
 
 %%% Only include the eunit testing library and functions
