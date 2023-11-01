@@ -14,7 +14,7 @@
 %%%===================================================================
 %%% Public API functions
 %%%===================================================================
--export([add/3,contains/3]).
+-export([add/3,contains/3,balance_left/1, balance_right/1]).
 
 %%%-------------------------------------------------------------------
 %%% @doc
@@ -82,14 +82,22 @@ default_compare(X,Y) when X < Y->
 -spec balance_left(rbt())->rbt().
 % black node has left red child with a left red grandchild
 balance_left({black,Value,{red,A_value,{red,B_value,B_left,B_right},A_right},Next_r})->
-	to_do.
-
+	{red, A_value, {black, B_value, B_left, B_right}, {black, Value, A_right, Next_r}};
+balance_left({black, Value, {red, A_value, A_left, {red, B_value, B_left, B_right}}, Next_r})->
+	{red, B_value, {black, A_value, A_left, B_left}, {black, Value, B_right, Next_r}};
+balance_left({Color, Value, Next_l, Next_r})->
+	{Color, Value, Next_l, Next_r}.
+	
 % balances the right branch of any RBT.
 
 -spec balance_right(rbt())->rbt().
 % black node has right red child with a right red grandchild
-balance_right({black,Value,Next_l,{red,A_value,A_left,{red,B_value,B_left,B_right}}})->
-	to_do.
+balance_right({black, Value, Next_l,{red, A_value, A_left,{red, B_value, B_left, B_right}}})->
+	{red, A_value, {black, Value, Next_l, A_left}, {black, B_value, B_left, B_right}};
+balance_right({black, Value, Next_l, {red, A_value, {red, B_value, B_left, B_right}, A_right}})->
+	{red, B_value, {black, Value, Next_l, B_left}, {black, A_value, B_right, A_right}};
+balance_right({Color, Value, Next_l, Next_r})->
+	{Color, Value, Next_l, Next_r}.
 
 
 
@@ -134,8 +142,8 @@ balance_right_test_()->
 	 %Nasty thoughts
 	 ?_assertEqual({black,5,{red,3,nil,nil},nil},% shouldn't balance a left-branch of the tree
  	 	balance_right({black,5,{red,3,nil,nil},nil})),
- 	 ?_assertEqual({black,7,{red,3,nil,{red,4,nil,nil},nil}},% shouldn't balance a left-branch of the tree
- 	 	balance_right({black,7,{red,3,nil,{red,4,nil,nil},nil}}))
+ 	 ?_assertEqual({black,7,{red,3,nil,{red,4,nil,nil}},nil},% shouldn't balance a left-branch of the tree
+ 	 	balance_right({black,7,{red,3,nil,{red,4,nil,nil}},nil}))
  	 ].
  
 add_test_() ->
