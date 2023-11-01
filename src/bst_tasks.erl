@@ -44,21 +44,21 @@ add(BST,nil,_)->
 	BST;
 add(BST,Val,nil) ->
 	{Focus_num, Left_child, Right_child} = BST,
-	Direction = default_compare(Focus_num, Val),
+	Direction = default_compare(Val, Focus_num),
 	if 
 		Direction =:= -1 ->
-			add(Left_child, Val, Function);
+			{Focus_num, add(Left_child, Val, nil), Right_child};
 		true ->
-			add(Right_child, Val, Function)
+			{Focus_num, Left_child, add(Right_child, Val, nil)}
 	end;
 add(BST,Val,Function) ->
 	{Focus_num, Left_child, Right_child} = BST,
-	Direction = Function(Focus_num, Val),
+	Direction = Function(Val, Focus_num),
 	if 
 		Direction =:= -1 ->
-			add(Left_child, Val, Function);
+			{Focus_num, add(Left_child, Val, Function), Right_child};
 		true ->
-			add(Right_child, Val, Function)
+			{Focus_num, Left_child, add(Right_child, Val, Function)}
 	end.
 %%%-------------------------------------------------------------------
 %%% @doc
@@ -80,8 +80,21 @@ add(BST,Val,Function) ->
 -spec contains(bst(),term(),fun((term(),term()) -> 1 | 0 | -1) | nil()) -> boolean().
 contains(nil,_,_)->
 	false;
-contains({Value,Next_l,Next_r},Search_value,Comparitor)->
-	to_do.
+contains({Value, Next_l, Next_r}, Search_value, nil)->
+	Value = default_compare(Value, Search_value),
+	case Value of
+		0 -> true;
+		-1 -> contains(Next_l, Search_value, nil);
+		1 -> contains(Next_r, Search_value, nil) 
+	end;
+contains({Value, Next_l, Next_r}, Search_value, Comparitor)->
+	Value = Comparitor(Value, Search_value),
+	case Value of
+		0 -> true;
+		-1 -> contains(Next_l, Search_value, Comparitor);
+		1 -> contains(Next_r, Search_value, Comparitor) 
+	end.
+
 
 -spec default_compare(term(),term())->1|0|-1.
 default_compare(X,Y) when X < Y -> 
