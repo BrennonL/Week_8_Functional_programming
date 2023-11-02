@@ -80,16 +80,16 @@ add(BST,Val,Function) ->
 -spec contains(bst(),term(),fun((term(),term()) -> 1 | 0 | -1) | nil()) -> boolean().
 contains(nil,_,_)->
 	false;
-contains({Value, Next_l, Next_r}, Search_value, nil)->
-	Value = default_compare(Value, Search_value),
-	case Value of
+contains({Value, Next_l, Next_r}, Search_value, Comparitor) when not is_function(Comparitor) ->
+	Compare_value = default_compare(Search_value, Value),
+	case Compare_value of
 		0 -> true;
 		-1 -> contains(Next_l, Search_value, nil);
 		1 -> contains(Next_r, Search_value, nil) 
 	end;
-contains({Value, Next_l, Next_r}, Search_value, Comparitor)->
-	Value = Comparitor(Value, Search_value),
-	case Value of
+contains({Value, Next_l, Next_r}, Search_value, Comparitor) ->
+	Compare_value = Comparitor(Search_value, Value),
+	case Compare_value of
 		0 -> true;
 		-1 -> contains(Next_l, Search_value, Comparitor);
 		1 -> contains(Next_r, Search_value, Comparitor) 
@@ -162,7 +162,7 @@ default_compare_test_()->
  	 	{sally,18,freshman},fun(X,Y)-> student_compare(X,Y) end)),
  	 %nasty thoughts
  	 ?_assertEqual(false,contains(nil,10,nil)),
- 	 ?_assertEqual(true,contains({10,{8,nil,nil},{25,nil,nil}},10,not_a_fun)),
+	?_assertEqual(true,contains({10,{8,nil,nil},{25,nil,nil}},10,not_a_fun)),
  	 ?_assertEqual(false,contains({10,{8,nil,nil},{25,nil,nil}},bob,not_a_fun))
  	].
 -endif.
