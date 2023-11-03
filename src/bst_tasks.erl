@@ -38,11 +38,13 @@
 -type bst_node() :: {term(),bst_node(),bst_node()}.
 -type bst() :: bst_node().
 -spec add(bst(),term(),fun((term(),term()) -> 1|0|-1) | nil()) -> bst().
+add(nil, nil, _) ->
+	nil;
 add(nil,Val,_) ->
 	{Val, nil, nil};
 add(BST,nil,_)->
 	BST;
-add(BST,Val,nil) ->
+add(BST,Val,Function) when not is_function(Function) ->
 	{Focus_num, Left_child, Right_child} = BST,
 	Direction = default_compare(Val, Focus_num),
 	if 
@@ -145,7 +147,7 @@ default_compare_test_()->
  	 ?_assertEqual({{bob,21,sophmore},{{sally,18,freshman},nil,nil},{{sue,22,senior},nil,nil}},
  	 				add({{bob,21,sophmore},nil,{{sue,22,senior},nil,nil}},{sally,18,freshman},fun(X,Y)-> student_compare(X,Y) end)),%happy path
  	 %nasty thoughts
- 	 ?_assertEqual(nil,add(nil,nil,nil)),
+ 	 ?_assertEqual(nil,add(nil,nil,nil)), 
  	 ?_assertEqual({7,nil,nil},add({7,nil,nil},nil,nil)),
  	 ?_assertEqual({7,nil,{10,nil,nil}},add({7,nil,nil},10,132)),%not a lambda
  	 ?_assertEqual({{bob,21,sophmore},nil,nil},add({{bob,21,sophmore},nil,nil},nil,fun(X,Y)-> student_compare(X,Y) end))

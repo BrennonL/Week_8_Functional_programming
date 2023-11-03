@@ -14,7 +14,7 @@
 %%%===================================================================
 %%% Public API functions
 %%%===================================================================
--export([add/3,contains/3,balance_left/1, balance_right/1]).
+-export([add/3,contains/3,balance_left/1, balance_right/1, default_compare/2]).
 
 %%%-------------------------------------------------------------------
 %%% @doc
@@ -41,9 +41,29 @@
 -type rbt() :: rbt_node().
 -spec add(rbt(),term(),fun((term(),term()) -> 1|0|-1) | nil()) -> rbt().
 
-add(nil,To_add,_)->
-	to_do.
+add(nil, To_add, _)->
+	%{color, newValue, nextL, nextR}
+	{black, To_add, nil, nil};
+add(Root, To_add, Comparitor) when not is_function(Comparitor) ->
+	{_, Root_value, Next_l, Next_r} = add_helper(Root, To_add, fun default_compare/2),
+	{black, Root_value, Next_l, Next_r};
+add(Root, To_add, Comparitor)->
+	{_, Root_value, Next_l, Next_r} = add_helper(Root, To_add, Comparitor),
+	{black, Root_value, Next_l, Next_r}.
 
+
+add_helper(nil, To_add, _) ->
+	%{color, newValue, nextL, nextR}
+	{red, To_add, nil, nil};
+add_helper({Color, Value, Next_l, Next_r}, To_add, Comparitor) ->
+	Comp = Comparitor(To_add, Value),
+	if
+		Comp =:= -1 -> 
+			balance_left({Color, Value, add_helper(Next_l, To_add, Comparitor), Next_r});
+		true -> 
+			balance_right({Color, Value, Next_l, add_helper(Next_r, To_add, Comparitor)})
+	end.
+	
 
 
 %%%-------------------------------------------------------------------
@@ -65,7 +85,21 @@ add(nil,To_add,_)->
 
 -spec contains(rbt(),term(),fun((term(),term()) -> 1 | 0 | -1) | nil()) -> boolean().
 contains(nil,_,_)->
-	to_do.
+	false;
+contains({_, Value, Next_l, Next_r}, Search_value, Comparitor) ->
+	Comp_value = if
+		is_function(Comparitor) -> Comparitor(Search_value, Value);
+		true -> default_compare(Search_value, Value)
+	end,
+	case Comp_value of
+		0 ->
+			true;
+		-1 -> 
+			contains(Next_l, Search_value, Comparitor);
+		1 ->
+			contains(Next_r, Search_value, Comparitor) 
+	end.
+
 
 %%
 %% Helper functions
@@ -73,8 +107,12 @@ contains(nil,_,_)->
 
 %% a default comparison function for values.
 -spec default_compare(term(),term())->1|0|-1.
-default_compare(X,Y) when X < Y->  
-	to_do.
+default_compare(X,Y) when X < Y -> 
+	-1;
+default_compare(X,Y) when X > Y -> 
+	1;
+default_compare(_X,_Y) -> 
+	0.
 
 
 % balances the left branch of any RBT.
